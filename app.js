@@ -676,7 +676,7 @@ function save() {
         return;
     }
     let selectedChecks = [...document.querySelectorAll('.check-toggle.active')]
-        .map(el => el.parentElement.querySelector('span').innerText);
+        .map(el => el.parentElement.querySelector('span').innerText.trim());
 
 
 
@@ -2087,7 +2087,10 @@ function openFullDayTrades(dateStr) {
 
 function openTradeDetails(index) {
     // ❌ BLOCK if user typing (keyboard open)
-    if (document.body.classList.contains("typing-mode")) return;
+    if (document.body.classList.contains("typing-mode")) {
+        closeTradeDetails();
+        return;
+    }
     let t = trades[index];
 
     let html = `
@@ -2125,7 +2128,7 @@ function openTradeDetails(index) {
 
             return st.items.map(item => {
 
-                let isChecked = t.checks?.includes(item);
+                let isChecked = t.checks?.some(c => c.trim().toLowerCase() === item.trim().toLowerCase());
 
                 return `
       <div style="
@@ -2194,6 +2197,7 @@ document.addEventListener("DOMContentLoaded", initApp);
    ========================================================= */
 
 function initApp() {
+    handleInputFocusFix();
     // ✅ AUTO DATE FIX (timezone safe)
     let dateInput = document.getElementById("date");
     if (dateInput && !dateInput.value) {
@@ -2377,11 +2381,11 @@ function handleInputFocusFix() {
         input.addEventListener("focus", () => {
 
             // ✅ close trade popup
-let tradeModal = document.getElementById("tradeModal");
-let tradeBackdrop = document.getElementById("tradeBackdrop");
+            let tradeModal = document.getElementById("tradeModal");
+            let tradeBackdrop = document.getElementById("tradeBackdrop");
 
-if (tradeModal) tradeModal.style.bottom = "-100%";
-if (tradeBackdrop) tradeBackdrop.style.display = "none";
+            if (tradeModal) tradeModal.style.bottom = "-100%";
+            if (tradeBackdrop) tradeBackdrop.style.display = "none";
 
             // 🔥 CLOSE any open detail modals / states
             document.querySelectorAll('.swipe-wrapper.open')
@@ -2638,36 +2642,36 @@ function observeAndAnimate(selector, callback) {
 }
 
 window.togglePassword = function () {
-  const input = document.getElementById("password");
-  const icon = document.querySelector(".toggle-password");
+    const input = document.getElementById("password");
+    const icon = document.querySelector(".toggle-password");
 
-  if (input.type === "password") {
-    input.type = "text";
-    icon.textContent = "🙈";
-  } else {
-    input.type = "password";
-    icon.textContent = "👁";
-  }
+    if (input.type === "password") {
+        input.type = "text";
+        icon.textContent = "🙈";
+    } else {
+        input.type = "password";
+        icon.textContent = "👁";
+    }
 };
 
 // 🔓 OPEN POPUP
 window.confirmLogout = function () {
-  const popup = document.getElementById("logoutPopup");
+    const popup = document.getElementById("logoutPopup");
 
-  if (!popup) {
-    console.error("Popup not found ❌");
-    return;
-  }
+    if (!popup) {
+        console.error("Popup not found ❌");
+        return;
+    }
 
-  popup.classList.add("show");
+    popup.classList.add("show");
 };
 
 window.closeLogoutPopup = function () {
-  const popup = document.getElementById("logoutPopup");
+    const popup = document.getElementById("logoutPopup");
 
-  if (!popup) return;
+    if (!popup) return;
 
-  popup.classList.remove("show");
+    popup.classList.remove("show");
 };
 
 // call once
