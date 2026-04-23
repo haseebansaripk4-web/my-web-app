@@ -1450,6 +1450,7 @@ function editTrade(id) {
         document.getElementById('entry').value = t.entry || "";
         document.getElementById('lev').value = t.leverage || "";
         document.getElementById('amt').value = t.amt || "";
+        document.getElementById('note').value = t.note || "";
 
         if (t.date) {
             let d = new Date(t.date);
