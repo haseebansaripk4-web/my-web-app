@@ -1268,7 +1268,6 @@ function renderAnalytics() {
     let map = {};
 
     trades.forEach(t => {
-
         if (!t.strategyId) return;
 
         if (!map[t.strategyId]) {
@@ -1276,19 +1275,20 @@ function renderAnalytics() {
         }
 
         if (t.type === "profit") {
-            map[t.strategyId].wins++;
+            map[t.strategy].wins++;
         } else {
-            map[t.strategyId].losses++;
+            map[t.strategy].losses++;
         }
     });
+
     let ranked = [];
     let html = "";
 
     // 1. build ranking
     Object.keys(map).forEach(id => {
 
-        let strategy = strategies.find(s => s.id === id);
-        let name = strategy ? strategy.name : "Unknown";
+    let strategy = strategies.find(s => s.id === id);
+    let name = strategy ? strategy.name : "Unknown";
 
         let s = map[name];
         let total = s.wins + s.losses;
@@ -1299,7 +1299,7 @@ function renderAnalytics() {
         let loss = 0;
 
         trades.forEach(t => {
-            if (t.strategyId !== id) return;
+            if (t.strategy !== name) return;
 
             if (t.type === "profit") profit += +t.amt;
             else loss += +t.amt;
@@ -1963,29 +1963,24 @@ function openDay(dateStr) {
 
     previewTrades.forEach(t => {
         html += `
-  <div style="
-    background:rgba(255,255,255,0.04);
-    padding:10px;
-    border-radius:12px;
-    margin-bottom:8px;
-    display:flex;
-    justify-content:space-between;
-  ">
-    <div>
-      <div style="font-size:13px;font-weight:600;">${t.coin}</div>
-      <div style="font-size:11px;color:#aaa;">
-        ${(function () {
-                let st = strategies.find(s => s.id === t.strategyId);
-                return st ? st.name : '';
-            })()}
-      </div>
-    </div>
+      <div style="
+        background:rgba(255,255,255,0.04);
+        padding:10px;
+        border-radius:12px;
+        margin-bottom:8px;
+        display:flex;
+        justify-content:space-between;
+      ">
+        <div>
+          <div style="font-size:13px;font-weight:600;">${t.coin}</div>
+          <div style="font-size:11px;color:#aaa;">${t.strategy || ''}</div>
+        </div>
 
-    <div style="color:${t.type === 'profit' ? '#1fa16f' : '#f6465d'};font-weight:600;">
-      ${t.type === 'profit' ? '+' : '-'}$${t.amt}
-    </div>
-  </div>
-`;
+        <div style="color:${t.type === 'profit' ? '#1fa16f' : '#f6465d'};font-weight:600;">
+          ${t.type === 'profit' ? '+' : '-'}$${t.amt}
+        </div>
+      </div>
+    `;
     });
 
     let fullHtml = html;
@@ -2073,32 +2068,28 @@ function openFullDayTrades(dateStr) {
 
     dayTrades.forEach(t => {
         html += `
-  <div style="
-    background:rgba(255,255,255,0.04);
-    padding:10px;
-    border-radius:12px;
-    margin-bottom:8px;
-    display:flex;
-    justify-content:space-between;
-  ">
-    <div>
-      <div style="font-size:13px;font-weight:600;">${t.coin}</div>
-      <div style="font-size:11px;color:#aaa;">
-        ${(function () {
-                let st = strategies.find(s => s.id === t.strategyId);
-                return st ? st.name : '';
-            })()}
-      </div>
-    </div>
+      <div style="
+        background:rgba(255,255,255,0.04);
+        padding:10px;
+        border-radius:12px;
+        margin-bottom:8px;
+        display:flex;
+        justify-content:space-between;
+      ">
+        <div>
+          <div style="font-size:13px;font-weight:600;">${t.coin}</div>
+          <div style="font-size:11px;color:#aaa;">${t.strategy || ''}</div>
+        </div>
 
-    <div style="color:${t.type === 'profit' ? '#1fa16f' : '#f6465d'};font-weight:600;">
-      ${t.type === 'profit' ? '+' : '-'}$${t.amt}
-    </div>
-  </div>
-`;
+        <div style="color:${t.type === 'profit' ? '#1fa16f' : '#f6465d'};font-weight:600;">
+          ${t.type === 'profit' ? '+' : '-'}$${t.amt}
+        </div>
+      </div>
+    `;
     });
 
     html += `</div>`;
+
     container.innerHTML = html;
 }
 
@@ -2126,11 +2117,7 @@ function openTradeDetails(index) {
       <div><b>Leverage:</b> ${t.leverage || '-'}</div>
       <div><b>Amount:</b> ${t.amt}</div>
       <div><b>Type:</b> ${t.type}</div>
-      <div><b>Strategy:</b> ${(function () {
-            let st = strategies.find(s => s.id === t.strategyId);
-            return st ? st.name : '-';
-        })()
-        }</div>
+      <div><b>Strategy:</b> ${t.strategy || '-'}</div>
 
       <div style="margin-top:10px;">
   <b>Checklist</b>
@@ -2146,15 +2133,10 @@ function openTradeDetails(index) {
 " class="checklist-scroll">
     ${(function () {
 
-            if (!t.strategyId) {
-                return `<div style="color:#777;font-size:12px;">No checklist</div>`;
-            }
+            if (!t.strategy) return `<div style="color:#777;font-size:12px;">No checklist</div>`;
 
             let st = strategies.find(s => s.id === t.strategyId);
-
-            if (!st || !st.items || st.items.length === 0) {
-                return `<div style="color:#777;font-size:12px;">No checklist</div>`;
-            }
+            if (!st) return `<div style="color:#777;font-size:12px;">No checklist</div>`;
 
             return st.items.map(item => {
 
@@ -2596,12 +2578,10 @@ function renderBestStrategyCard(bestStrategy, trades) {
     let loss = 0;
 
     trades.forEach(t => {
-
-        if (t.strategyId !== bestStrategy.id) return;
+        if (t.strategy !== bestStrategy.name) return;
 
         if (t.type === "profit") profit += +t.amt;
         else loss += +t.amt;
-
     });
 
     let netProfit = profit - loss;
