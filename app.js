@@ -356,7 +356,7 @@ function render() {
 
     if (s) {
         s.innerHTML = `<option value="">Select Strategy</option>` +
-            strategies.map(x => `<option value="${x.name}">${x.name}</option>`).join('');
+            strategies.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
     }
     updateChecks();
     requestAnimationFrame(() => {
@@ -587,13 +587,13 @@ function updateChecks() {
     // ❌ agar koi strategy select nahi
     if (!selected) return;
 
-    let st = strategies.find(s => s.name === selected);
+    let st = strategies.find(s => s.id === selected);
     if (!st) return;
 
     st.items.forEach(item => {
         c.innerHTML += `
       <div class="check-item">
-        <span>${item}</span>
+        <span data-id="${item.id}">${item.text}</span>
         <div class="check-toggle" onclick="toggleCheck(this)"></div>
       </div>
     `;
@@ -617,8 +617,8 @@ function applyChecklistSelections(checksArray) {
         }
 
         items.forEach(el => {
-            let text = el.parentElement.querySelector('span').innerText;
-            if (checksArray?.includes(text)) {
+            let id = el.parentElement.querySelector('span').dataset.id;
+            if (checksArray?.includes(id)) {
                 el.classList.add('active');
             } else {
                 el.classList.remove('active');
@@ -676,9 +676,7 @@ function save() {
         return;
     }
     let selectedChecks = [...document.querySelectorAll('.check-toggle.active')]
-        .map(el => el.parentElement.querySelector('span').innerText.trim());
-
-
+        .map(el => el.parentElement.querySelector('span').dataset.id);
 
     let tradeData = {
         coin: coinEl.value,
@@ -688,7 +686,7 @@ function save() {
         type: typeEl.value,
         date: dateEl.value,
         createdAt: serverTimestamp(), // ✅ ADD THIS
-        strategy: strategyEl.value,
+        strategyId: strategyEl.value,
         checks: selectedChecks,
         note: document.getElementById('note').value || ""
     };
@@ -985,15 +983,24 @@ async function saveStrategy(e) {
 
     let name = document.getElementById('newStrategyName').value.trim();
     let items = [...document.querySelectorAll('.checklist-field')]
-        .map(i => i.value)
-        .filter(v => v.trim() !== '');
+        .map(i => ({
+            id: i.dataset.id || crypto.randomUUID(),
+            text: i.value
+        }))
+        .filter(i => i.text.trim() !== '');
 
     if (!name) {
         showToast("Enter strategy name", "error");
         return;
     }
 
-    let newData = { name, items };
+    let newData = {
+        name,
+        items: items.map(text => ({
+            id: crypto.randomUUID(),
+            text
+        }))
+    };
 
     try {
 
@@ -1261,24 +1268,27 @@ function renderAnalytics() {
     let map = {};
 
     trades.forEach(t => {
-        if (!t.strategy) return;
 
-        if (!map[t.strategy]) {
-            map[t.strategy] = { wins: 0, losses: 0 };
+        if (!t.strategyId) return;
+
+        if (!map[t.strategyId]) {
+            map[t.strategyId] = { wins: 0, losses: 0 };
         }
 
         if (t.type === "profit") {
-            map[t.strategy].wins++;
+            map[t.strategyId].wins++;
         } else {
-            map[t.strategy].losses++;
+            map[t.strategyId].losses++;
         }
     });
-
     let ranked = [];
     let html = "";
 
     // 1. build ranking
-    Object.keys(map).forEach(name => {
+    Object.keys(map).forEach(id => {
+
+        let strategy = strategies.find(s => s.id === id);
+        let name = strategy ? strategy.name : "Unknown";
 
         let s = map[name];
         let total = s.wins + s.losses;
@@ -1289,7 +1299,7 @@ function renderAnalytics() {
         let loss = 0;
 
         trades.forEach(t => {
-            if (t.strategy !== name) return;
+            if (t.strategyId !== id) return;
 
             if (t.type === "profit") profit += +t.amt;
             else loss += +t.amt;
@@ -1461,7 +1471,7 @@ function editTrade(id) {
 
 
         setTimeout(() => {
-            document.getElementById('strategy').value = t.strategy || "";
+            document.getElementById('strategy').value = t.strategyId || "";
             updateChecks();
 
             // 🔥 FIXED APPLY
@@ -1617,7 +1627,8 @@ function editStrategy(i) {
     s.items.forEach(item => {
         let input = document.createElement('input');
         input.className = 'input checklist-field';
-        input.value = item;
+        input.value = item.text;
+        input.dataset.id = item.id;
         container.appendChild(input);
     });
 }
@@ -1952,24 +1963,29 @@ function openDay(dateStr) {
 
     previewTrades.forEach(t => {
         html += `
-      <div style="
-        background:rgba(255,255,255,0.04);
-        padding:10px;
-        border-radius:12px;
-        margin-bottom:8px;
-        display:flex;
-        justify-content:space-between;
-      ">
-        <div>
-          <div style="font-size:13px;font-weight:600;">${t.coin}</div>
-          <div style="font-size:11px;color:#aaa;">${t.strategy || ''}</div>
-        </div>
-
-        <div style="color:${t.type === 'profit' ? '#1fa16f' : '#f6465d'};font-weight:600;">
-          ${t.type === 'profit' ? '+' : '-'}$${t.amt}
-        </div>
+  <div style="
+    background:rgba(255,255,255,0.04);
+    padding:10px;
+    border-radius:12px;
+    margin-bottom:8px;
+    display:flex;
+    justify-content:space-between;
+  ">
+    <div>
+      <div style="font-size:13px;font-weight:600;">${t.coin}</div>
+      <div style="font-size:11px;color:#aaa;">
+        ${(function () {
+                let st = strategies.find(s => s.id === t.strategyId);
+                return st ? st.name : '';
+            })()}
       </div>
-    `;
+    </div>
+
+    <div style="color:${t.type === 'profit' ? '#1fa16f' : '#f6465d'};font-weight:600;">
+      ${t.type === 'profit' ? '+' : '-'}$${t.amt}
+    </div>
+  </div>
+`;
     });
 
     let fullHtml = html;
@@ -2057,28 +2073,32 @@ function openFullDayTrades(dateStr) {
 
     dayTrades.forEach(t => {
         html += `
-      <div style="
-        background:rgba(255,255,255,0.04);
-        padding:10px;
-        border-radius:12px;
-        margin-bottom:8px;
-        display:flex;
-        justify-content:space-between;
-      ">
-        <div>
-          <div style="font-size:13px;font-weight:600;">${t.coin}</div>
-          <div style="font-size:11px;color:#aaa;">${t.strategy || ''}</div>
-        </div>
-
-        <div style="color:${t.type === 'profit' ? '#1fa16f' : '#f6465d'};font-weight:600;">
-          ${t.type === 'profit' ? '+' : '-'}$${t.amt}
-        </div>
+  <div style="
+    background:rgba(255,255,255,0.04);
+    padding:10px;
+    border-radius:12px;
+    margin-bottom:8px;
+    display:flex;
+    justify-content:space-between;
+  ">
+    <div>
+      <div style="font-size:13px;font-weight:600;">${t.coin}</div>
+      <div style="font-size:11px;color:#aaa;">
+        ${(function () {
+                let st = strategies.find(s => s.id === t.strategyId);
+                return st ? st.name : '';
+            })()}
       </div>
-    `;
+    </div>
+
+    <div style="color:${t.type === 'profit' ? '#1fa16f' : '#f6465d'};font-weight:600;">
+      ${t.type === 'profit' ? '+' : '-'}$${t.amt}
+    </div>
+  </div>
+`;
     });
 
     html += `</div>`;
-
     container.innerHTML = html;
 }
 
@@ -2106,7 +2126,11 @@ function openTradeDetails(index) {
       <div><b>Leverage:</b> ${t.leverage || '-'}</div>
       <div><b>Amount:</b> ${t.amt}</div>
       <div><b>Type:</b> ${t.type}</div>
-      <div><b>Strategy:</b> ${t.strategy || '-'}</div>
+      <div><b>Strategy:</b> ${(function () {
+            let st = strategies.find(s => s.id === t.strategyId);
+            return st ? st.name : '-';
+        })()
+        }</div>
 
       <div style="margin-top:10px;">
   <b>Checklist</b>
@@ -2122,14 +2146,19 @@ function openTradeDetails(index) {
 " class="checklist-scroll">
     ${(function () {
 
-            if (!t.strategy) return `<div style="color:#777;font-size:12px;">No checklist</div>`;
+            if (!t.strategyId) {
+                return `<div style="color:#777;font-size:12px;">No checklist</div>`;
+            }
 
-            let st = strategies.find(s => s.name === t.strategy);
-            if (!st) return `<div style="color:#777;font-size:12px;">No checklist</div>`;
+            let st = strategies.find(s => s.id === t.strategyId);
+
+            if (!st || !st.items || st.items.length === 0) {
+                return `<div style="color:#777;font-size:12px;">No checklist</div>`;
+            }
 
             return st.items.map(item => {
 
-                let isChecked = t.checks?.some(c => c.trim().toLowerCase() === item.trim().toLowerCase());
+                let isChecked = t.checks?.includes(item.id);
 
                 return `
       <div style="
@@ -2148,7 +2177,7 @@ function openTradeDetails(index) {
           </span>
 
           <span style="font-size:12px;color:${isChecked ? '#1fa16f' : '#f6465d'};">
-            ${item}
+            ${item.text}
           </span>
         </div>
 
@@ -2227,7 +2256,7 @@ function initApp() {
         if (strategyEl) {
             strategyEl.innerHTML =
                 `<option value="">Select Strategy</option>` +
-                strategies.map(x => `<option value="${x.name}">${x.name}</option>`).join('');
+                strategies.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
 
             // ✅ auto select first strategy (FIXED HERE)
             if (strategies.length > 0) {
@@ -2275,7 +2304,7 @@ function startStrategyListener(retry = 0) {
             strategyEl.innerHTML =
                 `<option value="">Select Strategy</option>` +
                 strategies.map(x =>
-                    `<option value="${x.name}">${x.name}</option>`
+                    `<option value="${x.id}">${x.name}</option>`
                 ).join('');
 
             // restore previous selected value
@@ -2567,10 +2596,12 @@ function renderBestStrategyCard(bestStrategy, trades) {
     let loss = 0;
 
     trades.forEach(t => {
-        if (t.strategy !== bestStrategy.name) return;
+
+        if (t.strategyId !== bestStrategy.id) return;
 
         if (t.type === "profit") profit += +t.amt;
         else loss += +t.amt;
+
     });
 
     let netProfit = profit - loss;
