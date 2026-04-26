@@ -1,841 +1,225 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pro Trading Journal</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Journal</title>
 
-  <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <div id="loginScreen" class="login-container">
-    <div class="login-card">
-      <h2>Welcome Back 👋</h2>
-      <p>Login to your trading journal</p>
+    <!-- ================= SAAS LOADING OVERLAY ================= -->
+    <div id="saasLoader" class="saas-loader">
+        <div class="loader-box">
 
-      <input type="email" id="email" placeholder="Enter Email">
-      <div class="password-field">
-        <input type="password" id="password" placeholder="Enter Password">
-        <span class="toggle-password" onclick="togglePassword()">👁</span>
-      </div>
+            <div class="ultra-loader">
+                <div class="ultra-core"></div>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
 
-      <button onclick="loginUser()">Login</button>
-      <button class="signup" onclick="registerUser()">Create Account</button>
+            <h3>Loading Trading Engine</h3>
+            <p>Syncing your performance data...</p>
+
+        </div>
     </div>
-  </div>
+    <div class="sidebar">
+        <h3>TradeLog</h3>
 
-  <!-- APP -->
-  <div id="appScreen" style="display:none;">
-    <div class="app">
-      <div id="pullRefresh">
-        <i id="pullArrow" data-lucide="arrow-down"></i>
-        <div class="loader"></div>
-        <span id="pullText">Pull to refresh</span>
-      </div>
-      <div class="header">
+        <button class="nav active" onclick="switchTab('dashboard')">Dashboard</button>
+        <button class="nav" onclick="switchTab('trades')">Trades</button>
+       
+    </div>
+    <!-- ================= LOGIN VIEW ================= -->
+    <div id="loginView" class="center">
+        <div class="login-box">
 
-        <!-- LEFT -->
-        <div class="title">
-          <h1>Trading Journal</h1>
-          <span>Track your performance</span>
-        </div>
-
-        <!-- RIGHT ACTIONS -->
-        <div class="actions">
-          <div class="icon-btn" onclick="toggleSettingsMenu()">
-            <i data-lucide="settings"></i>
-          </div>
-
-        </div>
-
-      </div>
-      <!-- DASHBOARD -->
-      <div id="dashboard" class="view active">
-
-        <!-- NEW STATS GRID -->
-        <div class="stats-grid">
-
-          <div class="stat-card">
-
-            <div class="stat-icon purple-bg">
-              <i data-lucide="bar-chart-3"></i>
+            <div class="logo-box center-logo">
+                <div class="logo-icon"></div>
+                <span>TradeLog</span>
             </div>
 
-            <div class="stat-title">Total Trades</div>
-            <div class="stat-value" id="totalTradesUI">0</div>
-            <div class="stat-change" id="tradesChange">
-              <span class="num"></span>
-              <span class="label"> vs last month</span>
-            </div>
+            <h2>Trading Journal</h2>
 
-          </div>
-          <div class="stat-card">
-
-            <div class="stat-icon green-bg">
-              <i data-lucide="activity"></i>
-            </div>
-
-            <div class="stat-title">Net P/L</div>
-            <div class="stat-value green" id="netUI">$0</div>
-            <div class="stat-change" id="netChange">
-              <span class="num"></span>
-              <span class="label"> vs last month</span>
-            </div>
-
-          </div>
-          <div class="stat-card">
-
-            <div class="stat-icon green-bg">
-              <i data-lucide="trending-up"></i>
-            </div>
-
-            <div class="stat-title">Total Profit</div>
-            <div class="stat-value green" id="totalProfitUI">$0</div>
-            <div class="stat-change" id="profitChange">
-              <span class="num"></span>
-              <span class="label"> vs last month</span>
-            </div>
-
-          </div>
-
-          <div class="stat-card">
-
-            <div class="stat-icon red-bg">
-              <i data-lucide="trending-down"></i>
-            </div>
-
-            <div class="stat-title">Total Loss</div>
-            <div class="stat-value red" id="totalLossUI">$0</div>
-            <div class="stat-change" id="lossChange">
-              <span class="num"></span>
-              <span class="label"> vs last month</span>
-            </div>
-
-
-          </div>
-
-
+            <button onclick="login()" class="google-btn">
+                <i data-lucide="log-in"></i>
+                Login with Google
+            </button>
 
         </div>
+    </div>
 
-        <!-- CHART -->
-        <div class="card chart-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <div class="chart-title">Equity Curve</div>
 
-            <div style="display:flex;gap:6px;align-items:center;">
+    <!-- ================= DASHBOARD VIEW ================= -->
+    <div id="dashboardView" style="display:none;">
 
-              <button class="filter-btn active" onclick="setChartMode('equity', this)">Equity</button>
-              <button class="filter-btn" onclick="setChartMode('bar', this)">Bar</button>
-              <button class="filter-btn" onclick="setChartMode('calendar', this)">Cal</button>
-
+        <header>
+            <div class="header-left">
+                <div class="logo-box">
+                    <div class="logo-icon"></div>
+                    <span>TradeLog</span>
+                </div>
             </div>
-          </div>
-          <div id="chartWrapper" style="overflow:auto; position:relative; touch-action:none;">
+          
+        </header>
 
-            <!-- ✅ FLOATING ZOOM CONTROLS -->
-            <div style="
-    position:absolute;
-    top:10px;
-    right:10px;
-    z-index:10;
-    display:flex;
-    gap:6px;
-  ">
-              <button onclick="zoomOut()" style="
-      width:34px;height:34px;
-      border-radius:8px;
-      border:none;
-      background:rgba(255,255,255,0.1);
-      color:#fff;
-      font-size:18px;
-    ">-</button>
-
-              <button onclick="zoomIn()" style="
-      width:34px;height:34px;
-      border-radius:8px;
-      border:none;
-      background:rgba(255,255,255,0.1);
-      color:#fff;
-      font-size:18px;
-    ">+</button>
-            </div>
-
-            <canvas id="chart"></canvas>
-          </div>
-          <!-- MINI CALENDAR -->
-          <div id="calendarView" class="hidden" style="margin-top:10px;"></div>
-        </div>
-        <div class="analytics-grid">
-
-          <!-- RR RATIO -->
-          <div class="stat-card glass">
-            <div class="stat-header">
-              <span>RR Ratio</span>
-              <span class="badge">Live</span>
-            </div>
-
-            <div class="stat-value" id="rrRatio">0</div>
-
-            <div class="progress-bar">
-              <div id="rrBar" class="progress-fill purple"></div>
-            </div>
-          </div>
-
-          <!-- AVG WIN -->
-          <div class="stat-card glass">
-            <div class="stat-header">
-              <span>Avg Win</span>
-            </div>
-
-            <div class="stat-value green" id="avgWin">$0.00</div>
-
-            <div class="progress-bar">
-              <div id="winBar" class="progress-fill green"></div>
-            </div>
-          </div>
-
-          <!-- AVG LOSS -->
-          <div class="stat-card glass">
-            <div class="stat-header">
-              <span>Avg Loss</span>
-            </div>
-
-            <div class="stat-value red" id="avgLoss">$0.00</div>
-
-            <div class="progress-bar">
-              <div id="lossBar" class="progress-fill red"></div>
-            </div>
-          </div>
-
-        </div>
-        <div class="circle-grid">
-
-          <!-- WIN RATE -->
-          <div class="circle-card">
-
-            <div class="circle-top">Win Rate</div>
-
-            <div class="circle-wrap">
-              <canvas id="winChart"></canvas>
-              <div class="circle-center">
-                <b id="winRateCircle">0%</b>
-              </div>
-            </div>
-
-            <div class="circle-bottom" id="winBreakdown">
-              0 wins / 0 trades
-            </div>
-
-          </div>
-
-          <!-- EXPECTANCY -->
-          <div class="circle-card">
-
-            <div class="circle-top">Expectancy</div>
-
-            <div class="circle-wrap">
-              <canvas id="pfChart"></canvas>
-              <div class="circle-center">
-                <b id="pfValue">$0</b>
-              </div>
-            </div>
-
-            <div class="circle-bottom" id="expBreakdown">
-              per trade
-            </div>
-
-          </div>
-
-        </div>
-
-        <div id="bestStrategyCard" class="best-strategy-card"></div>
-        <!-- STRATEGY PERFORMANCE -->
-        <div class="card">
-          <div class="chart-title">Strategy Performance</div>
-          <div id="strategyStats"></div>
-        </div>
-      </div>
-
-      <!-- ADD TRADE (MODERN UI) -->
-      <div id="add" class="view">
-
-        <div class="card">
-
-          <div style="font-size:14px;font-weight:600;margin-bottom:10px;">
-            ➕ Add New Trade
-          </div>
-
-          <!-- TRADE BASIC INFO -->
-          <div class="label">Coin / Pair</div>
-          <input class="input" id="coin" placeholder="e.g BTCUSDT">
-
-          <div class="row">
+        <!-- BALANCE -->
+        <div id="balanceSetup" class="popup" onclick="if(event.target === this) this.style.display='none'">
             <div>
-              <div class="label">Entry Price</div>
-              <input class="input" id="entry" type="number" placeholder="0.00">
+                <h3>Enter Initial Balance</h3>
+                <input type="number" id="initialBalance">
+                <button onclick="saveBalance(); event.stopPropagation();">Save</button>
+            </div>
+        </div>
+
+        <!-- CARDS -->
+        <section class="cards">
+
+
+            <div class="card">
+                <i data-lucide="activity"></i>
+                <p>Net</p>
+                <span id="net"></span>
             </div>
 
+            <div class="card green">
+                <i data-lucide="trending-up"></i>
+                <p>Profit</p>
+                <span id="profit"></span>
+            </div>
+
+            <div class="card red">
+                <i data-lucide="trending-down"></i>
+                <p>Loss</p>
+                <span id="loss"></span>
+            </div>
+
+            <div class="card">
+                <i data-lucide="percent"></i>
+                <p>Win Rate</p>
+                <span id="win"></span>
+            </div>
+
+        </section>
+
+        <button class="add-btn" onclick="openForm()">
+            <i data-lucide="plus"></i> Add Trade
+        </button>
+
+        <!-- TABLE -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Pair</th>
+                    <th>Dir</th>
+                    <th>PnL</th>
+                    <th>Emotion</th>
+                    <th>Mistake</th>
+                    <th>Note</th>
+                    <th>View</th>
+                </tr>
+            </thead>
+            <tbody id="journal"></tbody>
+        </table>
+        <div style="text-align:center; margin-top:10px;">
+            <button onclick="switchTab('trades')" id="viewAllBtn" class="view-all-btn">
+                View All Trades
+            </button>
+        </div>
+        <!-- FORM -->
+        <div id="formPopup" class="popup">
             <div>
-              <div class="label">Leverage</div>
-              <input class="input" id="lev" type="number" placeholder="x">
+                <button class="close-btn" onclick="closeForm()">✕</button>
+
+                <input type="date" id="date">
+                <input type="text" placeholder="Pair" id="BTCUSDT">
+
+                <select id="direction">
+                    <option>Long</option>
+                    <option>Short</option>
+                </select>
+
+                <div class="pnl-type">
+                    <button onclick="setType('profit')" id="profitBtn">Profit</button>
+                    <button onclick="setType('loss')" id="lossBtn">Loss</button>
+                </div>
+
+                <input type="number" id="pnl" placeholder="$0.00">
+
+                <select id="emotion">
+                    <option>Confident</option>
+                    <option>Fear</option>
+                    <option>Greed</option>
+                    <option>Revenge</option>
+                </select>
+
+                <select id="mistake">
+                    <option>None</option>
+                    <option>FOMO</option>
+                    <option>No SL</option>
+                    <option>Early Entry</option>
+                    <option>Overtrading</option>
+                    <option>Late Exit</option>
+                </select>
+
+                <input type="text" id="note" placeholder="Enter Note">
+                <input type="text" id="link" placeholder="Image https://yourlink.com">
+
+                <button onclick="addTrade()">Save</button>
+
             </div>
-          </div>
-
-          <!-- PROFIT / LOSS TOGGLE -->
-          <div class="label">Trade Type</div>
-
-          <div style="display:flex;gap:10px;margin-top:8px;">
-
-            <button type="button" id="profitBtn" onclick="setTradeType('profit')" style="flex:1;padding:12px;border-radius:12px;border:1px solid transparent;
-    background:rgba(31,161,111,0.15);color:#1fa16f;font-weight:600;">
-              ↗ Profit
-            </button>
-
-            <button type="button" id="lossBtn" onclick="setTradeType('loss')" style="flex:1;padding:12px;border-radius:12px;border:1px solid transparent;
-    background:rgba(246,70,93,0.15);color:#f6465d;font-weight:600;">
-              ↘ Loss
-            </button>
-
-          </div>
-          <input type="hidden" id="type" value="profit">
-          <!-- AMOUNT -->
-          <div class="label">Amount ($)</div>
-          <input class="input" id="amt" placeholder="0.00">
-
-          <!-- DATE -->
-          <div class="label">Date & Time</div>
-          <input class="input" id="date" type="datetime-local">
-
-          <!-- STRATEGY -->
-          <div class="label">Strategy</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-
-            <select class="input" id="strategy" style="flex:1"></select>
-
-            <button type="button" onclick="openStrategyModal()" style="width:48px;height:48px;border-radius:12px;
-background:#F3BA2F;border:none;font-size:20px;font-weight:600;">
-              +
-            </button>
-
-          </div>
-
-          <!-- CHECKLIST -->
-          <div class="label">Checklist</div>
-          <div id="checks" class="scroll-box"></div>
-
-          <!-- Note area -->
-          <div class="label">Journal Note</div>
-          <textarea id="note" class="input" placeholder="Write your trade journal note..."
-            style="height:80px;resize:none;"></textarea>
-
-          <button class="btn" style="width:100%;margin-top:18px;" onclick="save()">
-            Save Trade
-          </button>
-          <button id="cancelBtn" class="btn" style="display:none;background:#555;margin-top:10px;"
-            onclick="cancelEdit()">
-            Cancel Edit
-          </button>
         </div>
 
-      </div>
+    </div>
+    <!-- ================= TRADES VIEW ================= -->
+    <div class="container"></div>
+    <div id="tradesView" style="display:none; padding:20px;">
 
-      <!-- HISTORY -->
-      <div id="history" class="view">
+        <h2>All Trades</h2>
 
-        <!-- FILTER BAR (MODERN UI UPGRADE) -->
-        <div class="card filter-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Pair</th>
+                    <th>Dir</th>
+                    <th>PnL</th>
+                    <th>Emotion</th>
+                    <th>Mistake</th>
+                    <th>Note</th>
+                    <th>View</th>
+                </tr>
+            </thead>
+            <tbody id="tradesTable"></tbody>
+        </table>
 
-          <!-- TOP FILTER PILLS -->
-          <div class="filter-scroll">
-
-            <button class="filter-pill active" onclick="setFilter('all', this)">
-              All
-            </button>
-
-            <button class="filter-pill" onclick="setFilter('profit', this)">
-              Profit
-            </button>
-
-            <button class="filter-pill" onclick="setFilter('loss', this)">
-              Loss
-            </button>
-
-            <button class="filter-pill" onclick="setFilter('today', this)">
-              Today
-            </button>
-
-            <button class="filter-pill" onclick="setFilter('week', this)">
-              Week
-            </button>
-
-            <button class="filter-pill" onclick="setFilter('month', this)">
-              Month
-            </button>
-
-            <!-- ⭐ NEW CLEAR BUTTON -->
-            <button class="filter-pill clear" onclick="clearFilter()">
-              Clear
-            </button>
-
-          </div>
-
-          <!-- DATE RANGE SECTION -->
-          <div class="date-row">
-
-            <input type="date" id="fromDate" class="input">
-            <input type="date" id="toDate" class="input">
-
-            <button onclick="setRangeFilter()" class="search-btn">
-              <i data-lucide="search"></i>
-            </button>
-
-          </div>
-
-        </div>
-
-        <!-- LIST -->
-        <div class="card" id="list"></div>
-
-      </div>
-      <!-- CALCULATOR -->
-      <div id="calculator" class="view">
-
-        <div class="card">
-
-          <div style="font-size:14px;font-weight:600;margin-bottom:10px;">
-            🧮 Trading Calculator
-          </div>
-
-          <!-- ⚡ YAHAN SE AP APNA CALCULATOR HTML ADD KAR SAKTE HO -->
-
-
-          <div class="input-group">
-            <label>Account Balance ($)</label>
-            <input type="number" id="calc-balance" placeholder="Enter Account Balance e.g 21">
-          </div>
-
-          <div class="input-group">
-            <label>Risk % (SL)</label>
-            <input type="number" id="calc-risk" placeholder=" Enter Risk e.g 1">
-          </div>
-
-          <div class="input-group">
-            <label>Reward % (TP)</label>
-            <input type="number" id="calc-reward" placeholder="Enter Reward e.g 2">
-          </div>
-
-          <div class="input-group">
-            <label>Position Type</label>
-            <select id="calc-type">
-              <option value="long">LONG</option>
-              <option value="short">SHORT</option>
-            </select>
-          </div>
-
-          <div class="input-group">
-            <label>Entry Price</label>
-            <input type="number" id="calc-entry" placeholder="Entery Price 0.05997">
-          </div>
-
-          <div class="input-group">
-            <label>Stop Loss (SL)</label>
-            <input type="number" id="calc-sl" placeholder="SL Price 0.05640">
-          </div>
-
-          <div class="input-group">
-            <label>Take Profit (TP)</label>
-            <input type="number" id="calc-tp" placeholder="TP Price 0.06728">
-          </div>
-
-
-          <button id="calcbutun" onclick="window.calculate()">Calculate</button>
-
-          <p id="error" style="color:#ef4444; font-size:12px; margin-top:10px;"></p>
-
-          <div class="result">
-            <p>Position Size: <span id="qty">-</span></p>
-            <p>Trade Amount ($): <span id="amount">-</span></p>
-            <p>Loss at SL ($): <span id="loss">-</span></p>
-            <p>Profit at TP ($): <span id="profit">-</span></p>
-            <p>Risk/Reward: <span id="rr">-</span></p>
-          </div>
-          <!-- ⚡ YAHAN TAK AP APNA CALCULATOR HTML ADD KAR SAKTE HO -->
-
-        </div>
-
-      </div>
+        <!-- Pagination -->
+        <div id="pagination" style="text-align:center; margin-top:15px;"></div>
 
     </div>
+    </div>
+    <!-- IMAGE MODAL -->
+    <div id="imgModal" class="img-modal" onclick="closeImage()">
 
-    <!-- MODERN BOTTOM NAV -->
-    <!-- MODERN BOTTOM NAV (REAL ICONS) -->
-    <div class="bottom-nav">
+        <!-- ❌ CLOSE BUTTON -->
+        <button class="close-img" onclick="closeImage()">✕</button>
 
-      <button class="nav-item active" onclick="show('dashboard',this)">
-        <i data-lucide="home"></i>
-      </button>
-
-      <button class="nav-item" onclick="show('add',this)">
-        <i data-lucide="plus-circle"></i>
-      </button>
-
-      <button class="nav-item" onclick="show('history',this)">
-        <i data-lucide="bar-chart-3"></i>
-      </button>
-
-      <button class="nav-item" onclick="show('calculator',this)">
-        <i data-lucide="calculator"></i>
-      </button>
+        <!-- IMAGE -->
+        <img id="modalImg">
 
     </div>
-    <!-- STRATEGY MODAL -->
-    <div id="strategyModal"
-      style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:999;">
-
-      <div style="width:90%;max-width:350px;background:#222531;padding:20px;border-radius:16px;">
-
-        <h3 style="margin-bottom:10px;">Add New Strategy</h3>
-
-        <input id="newStrategyName" class="input" placeholder="Strategy Name">
-
-        <div id="checklistInputs" class="scroll-box"></div>
-
-        <button onclick="addChecklistField()" class="btn" style="background:#333;">+ Add Checklist</button>
-
-        <button onclick="saveStrategy(event)" class="btn">Save Strategy</button>
-
-        <button onclick="closeStrategyModal()" class="btn" style="background:#f6465d;">Cancel</button>
-
-      </div>
-    </div>
-
-    <div id="dayPopup" style="
-  position:fixed;
-  bottom:-100%;
-  left:0;
-  width:100%;
-  max-width:420px;
-  margin:auto;
-  background:#1c1f2a;
-  border-radius:18px 18px 0 0;
-  padding:15px;
-  z-index:99999;
-  transition:0.3s;
-  box-shadow:0 -10px 30px rgba(0,0,0,0.5);
-">
-
-      <div style="width:50px;height:5px;background:#444;border-radius:10px;margin:0 auto 10px;"></div>
-
-      <div id="popupDate" style="font-size:14px;font-weight:600;margin-bottom:10px;"></div>
-
-      <div id="popupSummary" style="margin-bottom:10px;"></div>
-
-      <div id="popupTrades"></div>
-
-      <button onclick="closeDayPopup()" class="btn" style="margin-top:10px;background:#f6465d;">
-        Close
-      </button>
-    </div>
-
-    <div id="popupBackdrop" onclick="closeDayPopup()" style="
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.5);
-  display:none;
-  z-index:99998;
-"></div>
-    <!-- SETTINGS MENU -->
-    <div id="settingsMenu" style="
-  position:fixed;
-  left:0;
-  bottom:-100%;
-  width:100%;
-  max-width:420px;
-  margin:auto;
-  background:#1c1f2a;
-  border-radius:18px 18px 0 0;
-  padding:15px;
-  z-index:9999;
-  transition:0.3s;
-  box-shadow:0 -10px 30px rgba(0,0,0,0.5);
-">
-
-      <!-- HANDLE -->
-      <div style="width:50px;height:5px;background:#444;border-radius:10px;margin:0 auto 15px;"></div>
-
-      <!-- OPTION 1 -->
-      <div onclick="resetAllData()" style="
-  padding:14px;
-  border-radius:12px;
-  background:rgba(246,70,93,0.08);
-  border:1px solid rgba(246,70,93,0.2);
-  margin-bottom:10px;
-  cursor:pointer;
-  font-weight:500;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  color:#f6465d;
-">
-
-        <i data-lucide="trash-2" style="width:18px;height:18px;"></i>
-
-        <span>Reset All Data</span>
-      </div>
-
-      <!-- OPTION 2 -->
-      <div onclick="openStrategyManager()" style="
-  padding:14px;
-  border-radius:12px;
-  background:rgba(255,255,255,0.04);
-  cursor:pointer;
-  font-weight:500;
-  display:flex;
-  align-items:center;
-  gap:10px;
-">
-
-        <i data-lucide="edit-3" style="width:18px;height:18px;"></i>
-
-        <span>Edit / Delete Strategy</span>
-      </div>
-
-
-      <!-- OPTION 3 (LOGOUT) -->
-      <div onclick="confirmLogout()" style="
-  padding:14px;
-  border-radius:12px;
-  background:rgba(255,255,255,0.04);
-  cursor:pointer;
-  font-weight:500;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:10px;
-">
-
-        <i data-lucide="log-out" style="width:18px;height:18px;"></i>
-
-        <span>Logout</span>
-      </div>
-    </div>
-
-    <div id="settingsBackdrop" onclick="toggleSettingsMenu()" style="
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.5);
-  display:none;
-  z-index:9998;
-"></div>
-    <div id="strategyManager" style="
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:90%;
-  max-width:350px;
-  background:#222531;
-  padding:15px;
-  border-radius:16px;
-  display:none;
-  z-index:10000;
-">
-
-      <h3 style="margin-bottom:10px;">Manage Strategies</h3>
-
-      <div id="strategyList"></div>
-
-      <button onclick="closeStrategyManager()" class="btn" style="margin-top:10px;background:#f6465d;">
-        Close
-      </button>
-
-    </div>
-
-    <div id="tradeModal" style="
-position:fixed;
-bottom:-100%;
-left:0;
-width:100%;
-max-width:420px;
-margin:auto;
-background:#1c1f2a;
-border-radius:18px 18px 0 0;
-padding:15px;
-z-index:99999;
-transition:0.3s;
-box-shadow:0 -10px 30px rgba(0,0,0,0.5);
-">
-
-      <div style="width:50px;height:5px;background:#444;border-radius:10px;margin:0 auto 10px;"></div>
-
-      <div id="tradeDetailsContent"></div>
-
-      <button onclick="closeTradeDetails()" class="btn" style="margin-top:10px;background:#f6465d;">
-        Close
-      </button>
-    </div>
-
-    <div id="tradeBackdrop" onclick="closeTradeDetails()" style="
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-display:none;
-z-index:99998;
-"></div>
-
-    <!-- DANGER CONFIRM MODAL -->
-    <div id="dangerModal" style="
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.6);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:99999;
-">
-
-      <div style="
-    width:85%;
-    max-width:320px;
-    background:#1c1f26;
-    border:1px solid rgba(246,70,93,0.3);
-    border-radius:18px;
-    padding:18px;
-    text-align:center;
-    box-shadow:0 10px 30px rgba(0,0,0,0.5);
-  ">
-
-        <div style="font-size:28px;">⚠️</div>
-
-        <h3 style="margin:10px 0;color:#f6465d;">Delete Trade?</h3>
-
-        <p style="font-size:12px;color:#aaa;margin-bottom:15px;">
-          This action cannot be undone.
-        </p>
-
-        <div style="display:flex;gap:10px;">
-
-          <button id="cancelDeleteBtn" style="
-        flex:1;
-        padding:10px;
-        border:none;
-        border-radius:10px;
-        background:rgba(255,255,255,0.08);
-        color:#fff;
-        font-weight:600;
-      ">
-            Cancel
-          </button>
-
-          <button id="confirmDeleteBtn" style="
-        flex:1;
-        padding:10px;
-        border:none;
-        border-radius:10px;
-        background:#f6465d;
-        color:#fff;
-        font-weight:600;
-      ">
-            Delete
-          </button>
-
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ⚠️ Danger Reset Modal -->
-    <div id="resetModal" class="modal-overlay hidden">
-      <div class="modal-box">
-
-        <div class="modal-icon">⚠️</div>
-
-        <h2>Reset All Data?</h2>
-        <p>This action will permanently delete all <b>trades & strategies</b>.</p>
-
-        <div class="modal-actions">
-          <button class="btn-cancel" onclick="closeResetModal()">Cancel</button>
-          <button class="btn-danger" onclick="confirmReset()">Yes, Delete</button>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- 🗑️ Delete Strategy Modal -->
-    <div id="deleteModal" class="modal-overlay hidden">
-      <div class="modal-box">
-
-        <div class="modal-icon">🗑️</div>
-
-        <h2>Delete Strategy?</h2>
-        <p id="deleteText">Are you sure you want to delete this strategy?</p>
-
-        <div class="modal-actions">
-          <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
-          <button class="btn-danger" onclick="confirmDelete()">Delete</button>
-        </div>
-
-      </div>
-    </div>
-
-  </div> <!-- appScreen end -->
-
-  <div id="overlay" class="overlay hidden"></div>
-  <div id="toast" class="toast hidden">
-
-    <div class="toast-content">
-
-      <div class="toast-icon" id="toastIcon">✔</div>
-
-      <div class="toast-text">
-        <div id="toastMsg">Saved Successfully</div>
-      </div>
-
-    </div>
-
-    <div class="toast-progress"></div>
-
-  </div>
-
-  <div id="logoutPopup" class="logout-popup">
-
-    <div class="logout-card">
-
-      <h3>Confirm Logout</h3>
-      <p>Are you sure you want to logout?</p>
-
-      <button class="logout-btn" onclick="logoutUserConfirm()">Yes, Logout</button>
-
-      <button class="cancel-btn" onclick="closeLogoutPopup()">Cancel</button>
-
-    </div>
-
-  </div>
-
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="firebaseHelpers.js"></script>
-  <script type="module" src="app.js"></script>
-
-  <script src="calapp.js"></script>
+    <!-- FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script src="firebase.js"></script>
+    <script src="app.js"></script>
 
 </body>
 
